@@ -2,7 +2,7 @@ name: Update Burger King Data
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '0 */3 * * *' 
   workflow_dispatch:
 
 jobs:
@@ -15,21 +15,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch data from Burger King API
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright
         run: |
-          curl -s -X GET "https://orderapp.burgerkingrus.ru/api/v1/menu/coupons" \
-          -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-          -H "Accept: application/json, text/plain, */*" \
-          -H "Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7" \
-          -H "Referer: https://orderapp.burgerkingrus.ru/" \
-          -H "Origin: https://orderapp.burgerkingrus.ru" \
-          -o assets/data/data.json
+          npm init -y
+          npm install playwright
+          npx playwright install chromium --with-deps
+
+      - name: Fetch data
+        run: node fetch-data.js
 
       - name: Commit and push changes
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          # Проверяем, изменился ли файл data.json. Если да — коммитим и пушим.
           git add assets/data/data.json
           git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update data.json"
           git push
